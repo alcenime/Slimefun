@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slime Runes — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#C6A85A;--gold2:#E8C97A;--gold3:#FFD700;
+  --dark:#0a0810;--dark2:#110d1a;--dark3:#1a1228;
+  --text:#F0E6D3;--muted:rgba(240,230,211,0.5);
+  --border:rgba(198,168,90,0.2);
+  --sidebar-w:200px;
+  --topbar-h:60px;
+  --bottombar-h:72px;
+}
+html,body{height:100%;overflow:hidden;color:var(--text);font-family:'Cinzel',serif;background:#06050d;}
+
+/* ── BACKGROUND — blurred, pushed back ── */
+/* Layer system */
+.stage-sky{
+  position:absolute;inset:0;z-index:0;
+  background:url('assets/dashboard/sky.png') center top/cover no-repeat;
+  filter:blur(4px) brightness(0.9);
+  transform:scale(1.08);
+}
+.stage-mid{
+  position:absolute;inset:0;z-index:1;
+  background:url('assets/dashboard/mid.png') center bottom/cover no-repeat;
+  filter:blur(1px) brightness(0.85);
+  transform:scale(1.04);
+}
+.stage-ground{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  height:65%;
+  background:url('assets/dashboard/ground.png') center bottom/cover no-repeat;
+}
+
+
+/* Dark cover below layout on desktop */
+body::after{
+  content:'';
+  display:block;
+  background:#06050d;
+  position:fixed;
+  top:652px;
+  left:0;right:0;bottom:0;
+  z-index:999;
+}
+
+/* ── LAYOUT ── */
+.layout{
+  position:relative;z-index:10;
+  height:auto;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:var(--topbar-h) 520px var(--bottombar-h);
+  grid-template-columns:var(--sidebar-w) 1fr 280px;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "sidebar stage right"
+    "sidebar bottombar bottombar";
+}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  grid-area:topbar;
+  display:flex;align-items:center;
+  background:rgba(10,8,16,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 1.2rem;
+  gap:1rem;
+  position:relative;z-index:50;
+}
+
+.logo{
+  display:flex;flex-direction:column;align-items:center;
+  margin-right:0.5rem;width:80px;flex-shrink:0;
+}
+.logo-top{font-family:'Cinzel Decorative',serif;font-size:0.9rem;font-weight:900;
+  background:linear-gradient(180deg,#FFD700,#C6A85A);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;}
+.logo-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1px 0;}
+.logo-bot{font-family:'Cinzel',serif;font-size:0.45rem;letter-spacing:0.3em;color:rgba(198,168,90,0.6);text-transform:uppercase;}
+
+/* Nav icons */
+.nav-icons{display:flex;align-items:center;gap:0.2rem;flex:1;}
+.nav-icon{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:0.4rem 0.8rem;cursor:pointer;position:relative;
+  transition:all 0.2s;border-bottom:2px solid transparent;
+}
+.nav-icon:hover{border-bottom-color:rgba(198,168,90,0.4);}
+.nav-icon.active{border-bottom-color:var(--gold);}
+.nav-icon img{width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));transition:filter 0.2s;}
+.nav-icon:hover img,.nav-icon.active img{filter:drop-shadow(0 0 8px rgba(198,168,90,0.7)) drop-shadow(0 2px 6px rgba(0,0,0,0.6));}
+.nav-icon span{font-family:'DM Mono',monospace;font-size:0.42rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,230,211,0.45);transition:color 0.2s;}
+.nav-icon:hover span,.nav-icon.active span{color:var(--gold);}
+
+/* Top right — currencies */
+.topbar-right{display:flex;align-items:center;gap:0.6rem;margin-left:auto;}
+.currency{display:flex;align-items:center;gap:0.35rem;background:rgba(0,0,0,0.3);border:1px solid var(--border);padding:0.25rem 0.6rem;}
+.currency img{width:18px;height:18px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(255,200,0,0.8));}
+
+.currency-val{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--gold2);letter-spacing:0.06em;}
+.currency-add{width:18px;height:18px;border:1px solid var(--border);background:rgba(198,168,90,0.1);color:var(--gold);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.currency-add:hover{background:rgba(198,168,90,0.25);}
+
+.topbar-actions{display:flex;align-items:center;gap:0.5rem;margin-left:0.5rem;}
+.topbar-btn{width:32px;height:32px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;position:relative;}
+.topbar-btn:hover{border-color:var(--gold);color:var(--gold);}
+.notif-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#ef4444;}
+.menu-btn{width:32px;height:32px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all 0.2s;}
+.menu-btn span{display:block;width:14px;height:1.5px;background:currentColor;}
+.menu-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* Profile top right */
+.profile-top{display:flex;align-items:center;gap:0.5rem;background:rgba(0,0,0,0.4);border:1px solid var(--border);padding:0.25rem 0.6rem 0.25rem 0.3rem;cursor:pointer;}
+.profile-avatar{width:32px;height:32px;border-radius:50%;border:1px solid var(--gold);overflow:hidden;background:#1a1228;}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-info{display:flex;flex-direction:column;}
+.profile-name{font-family:'Cinzel',serif;font-size:0.55rem;font-weight:700;color:var(--text);letter-spacing:0.04em;}
+.profile-lv{font-family:'DM Mono',monospace;font-size:0.42rem;color:rgba(198,168,90,0.6);letter-spacing:0.06em;}
+.profile-xp{width:60px;height:3px;background:rgba(255,255,255,0.1);margin-top:2px;}
+.profile-xp-fill{height:100%;width:68%;background:linear-gradient(90deg,#C6A85A,#FFD700);}
+
+/* ══ SIDEBAR ══ */
+.sidebar{
+  grid-area:sidebar;
+  background:rgba(10,8,16,0.88);
+  backdrop-filter:blur(12px);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  padding:0.8rem 0;
+}
+
+.sidebar-item{
+  display:flex;align-items:center;gap:0.7rem;
+  padding:0.65rem 1rem;cursor:pointer;
+  transition:all 0.18s;position:relative;
+  border-left:2px solid transparent;
+}
+.sidebar-item:hover{background:rgba(198,168,90,0.06);}
+.sidebar-item.active{background:rgba(198,168,90,0.1);border-left-color:var(--gold);}
+.sidebar-item img{width:22px;height:22px;object-fit:contain;opacity:0.7;transition:opacity 0.2s,filter 0.2s;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
+.sidebar-item:hover img,.sidebar-item.active img{opacity:1;filter:drop-shadow(0 0 6px rgba(198,168,90,0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
+.sidebar-item span{font-family:'Cinzel',serif;font-size:0.6rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(240,230,211,0.45);transition:color 0.18s;}
+.sidebar-item:hover span{color:rgba(198,168,90,0.8);}
+.sidebar-item.active span{color:var(--gold);}
+.sidebar-badge{margin-left:auto;font-family:'DM Mono',monospace;font-size:0.36rem;padding:1px 5px;background:#ef4444;color:white;border-radius:2px;}
+.new-badge{background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:#4ade80;padding:1px 6px;font-size:0.36rem;font-family:'DM Mono',monospace;margin-left:auto;}
+
+/* Special pack at bottom of sidebar */
+.sidebar-bottom{margin-top:auto;padding:0.6rem 0.8rem;}
+.special-pack{
+  background:linear-gradient(135deg,rgba(198,168,90,0.15),rgba(100,60,20,0.2));
+  border:1px solid rgba(198,168,90,0.3);
+  padding:0.6rem 0.7rem;
+  position:relative;overflow:hidden;cursor:pointer;
+  transition:all 0.2s;
+}
+.special-pack:hover{border-color:rgba(198,168,90,0.6);background:linear-gradient(135deg,rgba(198,168,90,0.22),rgba(100,60,20,0.28));}
+.sp-badge{font-family:'DM Mono',monospace;font-size:0.38rem;letter-spacing:0.16em;color:#ef4444;text-transform:uppercase;margin-bottom:0.2rem;}
+.sp-title{font-family:'Cinzel',serif;font-size:0.62rem;font-weight:700;color:var(--gold2);margin-bottom:0.1rem;}
+.sp-sub{font-family:'DM Mono',monospace;font-size:0.4rem;color:var(--muted);margin-bottom:0.5rem;}
+.sp-btn{display:inline-flex;align-items:center;gap:0.3rem;background:rgba(198,168,90,0.2);border:1px solid var(--gold);padding:0.2rem 0.6rem;font-family:'Cinzel',serif;font-size:0.5rem;color:var(--gold2);letter-spacing:0.1em;cursor:pointer;}
+.sp-chest{position:absolute;right:-5px;bottom:-5px;width:55px;opacity:0.4;}
+.sp-chest img{width:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6)) drop-shadow(0 0 8px rgba(198,168,90,0.3));}
+
+
+/* ══ STAGE (CENTER) ══ */
+.stage{
+  grid-area:stage;
+  position:relative;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  overflow:hidden;
+  padding-bottom:1rem;
+}
+.stage::before{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(circle at 50% 60%,
+    rgba(255,215,0,0.13) 0%,
+    rgba(255,180,50,0.06) 30%,
+    transparent 65%);
+}
+.stage::after{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 40% 50% at 50% 0%, rgba(255,240,180,0.08) 0%, transparent 70%);
+}
+
+/* Rune circle under slime */
+.rune-circle{
+  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+  width:320px;height:320px;
+  background:radial-gradient(ellipse,rgba(198,168,90,0.08) 0%,transparent 70%);
+  border-radius:50%;
+  
+}
+.rune-circle::before,.rune-circle::after{
+  content:'';position:absolute;inset:10px;
+  border-radius:50%;border:1px solid rgba(198,168,90,0.1);
+  
+}
+.rune-circle::before{animation-duration:20s;}
+.rune-circle::after{inset:30px;animation-duration:30s;animation-direction:reverse;border-color:rgba(198,168,90,0.07);}
+@keyframes runepulse{0%,100%{opacity:0.6;}50%{opacity:1;}}
+@keyframes runespin{to{transform:rotate(360deg);}}
+
+/* Light ray from above */
+.light-ray{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:200px;height:70%;
+  background:linear-gradient(180deg,rgba(255,240,180,0.05) 0%,transparent 100%);
+  clip-path:polygon(30% 0%,70% 0%,85% 100%,15% 100%);
+  pointer-events:none;
+}
+
+/* Slime character */
+.slime-stage{
+  position:absolute;
+  bottom:160px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:6;
+  display:flex;flex-direction:column;align-items:center;
+}
+.slime-img{
+  width:380px;
+  filter:
+    drop-shadow(0 20px 60px rgba(0,0,0,0.55))
+    drop-shadow(0 0 60px rgba(255,200,100,0.25));
+  cursor:pointer;
+  position:relative;z-index:6;
+  margin-bottom:-110px;
+}
+.rune-platform{
+  width:300px;
+  display:block;
+  position:relative;z-index:4;
+  filter:drop-shadow(0 8px 20px rgba(198,168,90,0.4)) drop-shadow(0 0 30px rgba(255,200,50,0.3));
+}
+.slime-img:hover{
+  filter:
+    drop-shadow(0 30px 80px rgba(0,0,0,0.6))
+    drop-shadow(0 0 150px rgba(255,200,100,0.4))
+    drop-shadow(0 -10px 50px rgba(255,220,100,0.25));
+}
+.slime-img:hover{filter:drop-shadow(0 20px 40px rgba(198,168,90,0.35)) drop-shadow(0 0 80px rgba(255,200,100,0.2));}
+@keyframes slimefloat{
+  0%,100%{transform:translateY(0) rotate(-0.5deg);}
+  50%{transform:translateY(-16px) rotate(0.5deg);}
+}
+
+/* Shadow */
+.slime-shadow{
+  width:200px;height:18px;
+  background:radial-gradient(ellipse,rgba(0,0,0,0.45) 0%,transparent 70%);
+  border-radius:50%;margin-top:-8px;
+  
+}
+@keyframes shadowpulse{
+  0%,100%{transform:scaleX(1);opacity:0.6;}
+  50%{transform:scaleX(0.72);opacity:0.35;}
+}
+
+/* Mood bar at bottom of stage */
+.mood-bar{
+  display:flex;align-items:center;gap:0.8rem;
+  padding:0 1rem;
+  border-right:1px solid var(--border);
+  flex-shrink:0;
+}
+.mood-slime{width:36px;height:36px;border-radius:50%;overflow:hidden;border:1px solid var(--gold);flex-shrink:0;}
+.mood-slime img{width:100%;height:100%;object-fit:cover;}
+.mood-info{display:flex;flex-direction:column;}
+.mood-label{font-family:'DM Mono',monospace;font-size:0.38rem;letter-spacing:0.16em;color:rgba(198,168,90,0.5);text-transform:uppercase;}
+.mood-val{font-family:'Cinzel',serif;font-size:0.62rem;font-weight:700;color:var(--gold2);}
+.mood-hp{display:flex;align-items:center;gap:0.4rem;margin-top:2px;}
+.mood-hp-bar{width:80px;height:4px;background:rgba(255,255,255,0.1);}
+.mood-hp-fill{height:100%;width:60%;background:linear-gradient(90deg,#ef4444,#f97316);}
+.mood-hp-text{font-family:'DM Mono',monospace;font-size:0.42rem;color:rgba(240,230,211,0.45);}
+.mood-speech{
+  flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  padding:0.35rem 0.7rem;font-family:'DM Mono',monospace;font-size:0.5rem;
+  color:rgba(240,230,211,0.55);letter-spacing:0.04em;font-style:italic;
+}
+.mood-add{width:28px;height:28px;border:1px solid var(--border);background:rgba(198,168,90,0.08);color:var(--gold);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ══ RIGHT PANEL ══ */
+.right-panel{
+  grid-area:right;
+  background:rgba(10,8,16,0.82);
+  backdrop-filter:blur(12px);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  gap:0.5rem;
+  padding:0.7rem;
+}
+.right-panel::-webkit-scrollbar{width:3px;}
+.right-panel::-webkit-scrollbar-thumb{background:rgba(198,168,90,0.2);}
+
+/* Event banner */
+.event-banner{
+  position:relative;overflow:hidden;cursor:pointer;
+  border:1px solid rgba(198,168,90,0.25);
+  transition:border-color 0.2s;flex-shrink:0;
+}
+.event-banner:hover{border-color:rgba(198,168,90,0.55);}
+.event-banner img{width:100%;height:100px;object-fit:cover;display:block;}
+.event-label{position:absolute;top:0.4rem;left:0.5rem;font-family:'DM Mono',monospace;font-size:0.38rem;letter-spacing:0.18em;color:rgba(198,168,90,0.7);text-transform:uppercase;}
+.event-title{position:absolute;bottom:0.4rem;left:0.5rem;font-family:'Cinzel Decorative',serif;font-size:0.75rem;font-weight:900;color:#FFD700;line-height:1.1;text-shadow:0 2px 8px rgba(0,0,0,0.8);}
+.event-notif{position:absolute;top:0.4rem;right:0.4rem;width:8px;height:8px;border-radius:50%;background:#ef4444;}
+
+/* Panel cards — glass depth */
+.panel-card{
+  border:1px solid rgba(198,168,90,0.18);
+  background:rgba(14,10,24,0.65);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;gap:0.6rem;
+  padding:0.6rem 0.7rem;flex-shrink:0;
+  position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 4px 20px rgba(0,0,0,0.3);
+}
+.panel-card:hover{
+  background:rgba(20,14,35,0.75);
+  border-color:rgba(198,168,90,0.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 6px 25px rgba(0,0,0,0.4),0 0 15px rgba(198,168,90,0.08);
+}
+.panel-card-img{width:64px;height:64px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5));}
+.panel-card-info{flex:1;}
+.pc-title{font-family:'Cinzel',serif;font-size:0.7rem;font-weight:700;color:var(--text);letter-spacing:0.04em;margin-bottom:0.15rem;}
+.pc-sub{font-family:'DM Mono',monospace;font-size:0.44rem;color:var(--muted);letter-spacing:0.06em;}
+.panel-card-notif{position:absolute;top:0.4rem;right:0.4rem;width:8px;height:8px;border-radius:50%;background:#ef4444;}
+
+/* Adventure card - bigger */
+.adventure-card{
+  border:1px solid rgba(198,168,90,0.18);
+  background:rgba(14,10,24,0.65);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  cursor:pointer;transition:all 0.2s;
+  overflow:hidden;flex-shrink:0;
+  position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 4px 20px rgba(0,0,0,0.3);
+}
+.adventure-card:hover{border-color:rgba(198,168,90,0.4);box-shadow:0 0 20px rgba(198,168,90,0.1);}
+.adventure-card img{width:100%;height:160px;object-fit:cover;display:block;}
+.adventure-info{padding:0.6rem 0.8rem;}
+.adv-label{font-family:'DM Mono',monospace;font-size:0.4rem;letter-spacing:0.18em;color:rgba(198,168,90,0.5);text-transform:uppercase;margin-bottom:0.15rem;}
+.adv-title{font-family:'Cinzel Decorative',serif;font-size:1rem;font-weight:900;color:var(--text);}
+.adv-chapter{display:flex;align-items:center;gap:0.4rem;margin-top:0.3rem;}
+.adv-icon{width:16px;height:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+.adv-ch-text{font-family:'DM Mono',monospace;font-size:0.44rem;color:var(--muted);}
+.adventure-card .panel-card-notif{top:0.4rem;right:0.4rem;}
+
+/* Small 2-col cards */
+.mini-cards{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;flex-shrink:0;}
+.mini-card{
+  border:1px solid rgba(198,168,90,0.15);
+  background:rgba(14,10,24,0.65);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:0.55rem 0.6rem;cursor:pointer;transition:all 0.2s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 16px rgba(0,0,0,0.25);
+}
+.mini-card:hover{
+  background:rgba(20,14,35,0.75);
+  border-color:rgba(198,168,90,0.3);
+  box-shadow:0 0 12px rgba(198,168,90,0.08);
+}
+.mc-label{font-family:'DM Mono',monospace;font-size:0.38rem;letter-spacing:0.14em;color:rgba(198,168,90,0.5);text-transform:uppercase;margin-bottom:0.2rem;}
+.mc-title{font-family:'Cinzel',serif;font-size:0.62rem;font-weight:700;color:var(--text);}
+.mc-sub{font-family:'DM Mono',monospace;font-size:0.42rem;color:var(--muted);margin-top:0.15rem;}
+.mc-icon{float:right;width:28px;height:28px;object-fit:contain;opacity:0.7;}
+
+/* ══ BOTTOM BAR ══ */
+.bottombar{
+  grid-area:bottombar;
+  display:flex;align-items:center;
+  background:linear-gradient(180deg,rgba(10,8,16,0.0) 0%,rgba(10,8,16,0.97) 100%);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(198,168,90,0.15);
+  padding:0 1rem;
+  gap:0;
+  box-shadow:0 -10px 40px rgba(0,0,0,0.4);
+}
+/* mood kiri - fixed width */
+.mood-bar{
+  flex-shrink:0;
+  width:260px;
+}
+/* quick actions - center, ambil sisa ruang */
+.quick-actions{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;gap:0;
+}
+/* start adventure - kanan */
+.start-cta-img{
+  flex-shrink:0;
+  margin-left:auto;
+}
+
+/* Quick actions */
+.quick-actions{display:flex;align-items:center;gap:0.2rem;}
+.qa{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:0.4rem 0.7rem;cursor:pointer;transition:all 0.2s;
+  position:relative;
+}
+.qa:hover .qa-icon{filter:drop-shadow(0 0 8px rgba(198,168,90,0.6)) drop-shadow(0 2px 6px rgba(0,0,0,0.5));}
+.qa-icon{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));transition:filter 0.2s;}
+.qa-label{font-family:'DM Mono',monospace;font-size:0.4rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,230,211,0.4);}
+.qa-notif{position:absolute;top:2px;right:8px;width:7px;height:7px;border-radius:50%;background:#ef4444;}
+
+.rune-img{ display:none; }
+
+/* Slime on top of altar */
+.start-cta-img{
+  height:56px;
+  width:auto;
+  cursor:pointer;
+  margin-left:auto;
+  filter:drop-shadow(0 0 20px rgba(198,168,90,0.5));
+  transition:filter 0.2s, transform 0.2s;
+  flex-shrink:0;
+}
+.start-cta-img:hover{
+  filter:drop-shadow(0 0 35px rgba(255,215,0,0.8));
+  transform:scale(1.04);
+}
+  display:flex;align-items:center;gap:1rem;
+  background:linear-gradient(135deg,rgba(198,168,90,0.35),rgba(120,80,20,0.5));
+  border:2px solid var(--gold);
+  padding:0.7rem 2rem;
+  cursor:pointer;transition:box-shadow 0.2s,background 0.2s;margin-left:auto;
+  position:relative;overflow:hidden;
+  min-width:220px;
+  
+}
+@keyframes ctapulse{
+  0%,100%{box-shadow:0 0 20px rgba(198,168,90,0.25),inset 0 0 10px rgba(255,215,0,0.05);}
+  50%{box-shadow:0 0 45px rgba(198,168,90,0.55),0 0 80px rgba(198,168,90,0.15),inset 0 0 20px rgba(255,215,0,0.08);}
+}
+.start-cta::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,215,0,0.15),transparent);opacity:0;transition:opacity 0.2s;}
+.start-cta:hover::before{opacity:1;}
+.start-cta:hover{animation:none;box-shadow:0 0 60px rgba(198,168,90,0.65);}
+.cta-compass{width:40px;height:40px;object-fit:contain;flex-shrink:0;}
+@keyframes compassspin{to{transform:rotate(360deg);}}
+.cta-text{display:flex;flex-direction:column;}
+.cta-label{font-family:'DM Mono',monospace;font-size:0.44rem;letter-spacing:0.2em;color:rgba(198,168,90,0.7);text-transform:uppercase;}
+.cta-title{font-family:'Cinzel Decorative',serif;font-size:1.15rem;font-weight:900;
+  background:linear-gradient(135deg,#FFD700,#E8C97A,#FFD700);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:0.04em;line-height:1.1;}
+
+/* ── Particles ── */
+
+
+/* ══ MOBILE RESPONSIVE ══ */
+@media(max-width:900px){
+  html,body{height:100% !important;overflow:hidden !important;}
+  body::after{display:none;}
+  :root{
+    --topbar-h:52px;
+    --bottombar-h:64px;
+    --sidebar-w:200px;
+  }
+
+  /* Mobile layout: full screen kayak desktop */
+  .layout{
+    grid-template-columns:var(--sidebar-w) 1fr 280px;
+    grid-template-rows:var(--topbar-h) 1fr var(--bottombar-h);
+    grid-template-areas:
+      "topbar topbar topbar"
+      "sidebar stage right"
+      "sidebar bottombar bottombar";
+    height:100vh !important;
+  }
+
+  /* Sidebar & right panel tetap show */
+  .sidebar{display:flex;}
+  .right-panel{display:flex;}
+
+  /* Topbar mobile */
+  .topbar{padding:0 0.8rem;gap:0.5rem;}
+  .logo{width:55px;}
+  .logo-top{font-size:0.65rem;}
+  .nav-icons{gap:0;}
+  .nav-icon{padding:0.3rem 0.5rem;}
+  .nav-icon img{width:22px;height:22px;}
+  .nav-icon span{display:none;}
+  .topbar-right{gap:0.4rem;}
+  .currency{padding:0.2rem 0.4rem;}
+  .currency-val{font-size:0.5rem;}
+  .currency img{width:14px;height:14px;}
+  .currency-add{width:16px;height:16px;font-size:0.7rem;}
+  .topbar-actions{gap:0.3rem;}
+  .topbar-btn{width:26px;height:26px;}
+  .menu-btn{width:26px;height:26px;}
+  .profile-top{padding:0.2rem 0.4rem 0.2rem 0.25rem;}
+  .profile-avatar{width:26px;height:26px;}
+  .profile-name{font-size:0.48rem;}
+  .profile-lv{font-size:0.36rem;}
+
+  /* Stage mobile */
+  .stage{grid-area:stage;justify-content:center;padding-bottom:0;overflow:hidden;height:400px;}
+
+  /* Sidebar compact mobile */
+  .sidebar{width:var(--sidebar-w);overflow:hidden;}
+  .sidebar-item{padding:0.4rem 0.3rem;gap:0.2rem;flex-direction:column;align-items:center;text-align:center;}
+  .sidebar-item span{font-size:0.32rem;letter-spacing:0.04em;}
+  .sidebar-item img{width:18px;height:18px;}
+  .sidebar-bottom{display:none;}
+
+  /* Right panel compact mobile */
+  .right-panel{width:110px;overflow:hidden;padding:0.4rem 0.3rem;gap:0.4rem;}
+  .event-card{min-height:60px;}
+  .event-title{font-size:0.5rem;}
+  .pc-title{font-size:0.5rem;}
+  .pc-sub,.adv-label,.mc-label{display:none;}
+  .mini-cards{display:none;}
+
+
+  /* Mood bar mobile */
+  .mood-bar{padding:0.5rem 0.8rem;gap:0.5rem;}
+  .mood-slime{width:30px;height:30px;}
+  .mood-val{font-size:0.55rem;}
+  .mood-hp-bar{width:60px;}
+  .mood-speech{font-size:0.44rem;padding:0.25rem 0.5rem;}
+
+  /* Bottom bar mobile */
+  .bottombar{padding:0 0.5rem;gap:0.3rem;}
+  .qa{padding:0.3rem 0.5rem;}
+  .qa-icon{width:26px;height:26px;}
+  .qa-label{font-size:0.35rem;}
+  .start-cta{padding:0.5rem 0.8rem;gap:0.5rem;}
+  .cta-compass{width:26px;height:26px;}
+  .cta-label{font-size:0.36rem;}
+  .cta-title{font-size:0.75rem;}
+
+  /* Mobile: slide-in right panel */
+  .right-panel{
+    display:flex;
+    position:fixed;
+    top:var(--topbar-h);
+    right:-100%;
+    bottom:var(--bottombar-h);
+    width:280px;
+    z-index:100;
+    transition:right 0.3s ease;
+    overflow-y:auto;
+  }
+  .right-panel.open{right:0;}
+
+  /* Mobile: slide-in sidebar */
+  .sidebar{
+    display:flex;
+    position:fixed;
+    top:var(--topbar-h);
+    left:-240px;
+    bottom:var(--bottombar-h);
+    width:220px;
+    z-index:100;
+    transition:left 0.3s ease;
+  }
+  .sidebar.open{left:0;}
+
+  /* Overlay */
+  .mobile-overlay{
+    display:none;
+    position:fixed;inset:0;z-index:99;
+    background:rgba(0,0,0,0.5);
+    backdrop-filter:blur(2px);
+  }
+  .mobile-overlay.show{display:block;}
+
+  /* Mobile top-right panel button */
+  .mobile-panel-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:28px;height:28px;
+    border:1px solid var(--border);
+    background:rgba(198,168,90,0.1);
+    color:var(--gold);cursor:pointer;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+
+  /* Rune circle smaller */
+  .rune-circle{width:220px;height:220px;bottom:80px;}
+  .light-ray{display:none;}
+  .slime-stage{bottom:15px;}
+  .slime-img{width:220px;margin-bottom:-55px;}
+  .rune-platform{width:150px;}
+  .start-cta-img{height:44px;}
+  .slime-stage{margin-bottom:20px;}
+}
+
+/* Desktop — hide mobile elements */
+@media(min-width:901px){
+  .mobile-overlay{display:none!important;}
+  .mobile-panel-btn{display:none!important;}
+  .mobile-menu-btn{display:none!important;}
+}
+</style>
+</head>
+<body>
+
+
+
+<div class="tooltip" id="tooltip"></div>
+<div class="mobile-overlay" id="mobileOverlay" onclick="closePanels()"></div>
+
+<div class="layout">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-top">Slime</div>
+      <div class="logo-divider"></div>
+      <div class="logo-bot">· Runes ·</div>
+    </div>
+
+    <!-- Nav icons -->
+    <nav class="nav-icons">
+      <div class="nav-icon active" onclick="setNav(this)">
+        <img src="assets/icons/navbar/home.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23C6A85A%22><path d=%22M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z%22/></svg>'" alt="">
+        <span>Home</span>
+      </div>
+      <div class="nav-icon" onclick="setNav(this)">
+        <img src="assets/icons/navbar/hero.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23C6A85A%22><path d=%22M12 2L8 6H4l2 4-4 2 4 2-2 4h4l4 4 4-4h4l-2-4 4-2-4-2 2-4h-4z%22/></svg>'" alt="">
+        <span>Hero</span>
+      </div>
+      <div class="nav-icon" onclick="setNav(this)">
+        <img src="assets/icons/navbar/inventory.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23C6A85A%22><path d=%22M20 6h-2.18c.07-.44.18-.86.18-1a3 3 0 00-6 0c0 .14.11.56.18 1H10c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z%22/></svg>'" alt="">
+        <span>Inventory</span>
+      </div>
+      <div class="nav-icon" onclick="setNav(this)">
+        <img src="assets/icons/navbar/shop.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23C6A85A%22><path d=%22M7 4H2l3 9H7v2h10v-2h2l3-9H17l-1 4H8zm0 14a2 2 0 104 0 2 2 0 00-4 0zm8 0a2 2 0 104 0 2 2 0 00-4 0z%22/></svg>'" alt="">
+        <span>Shop</span>
+      </div>
+      <div class="nav-icon" onclick="setNav(this)">
+        <img src="assets/icons/navbar/quest.png" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23C6A85A%22><path d=%22M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 7V3.5L18.5 9H13z%22/></svg>'" alt="">
+        <span>Quest</span>
+      </div>
+    </nav>
+
+    <!-- Currencies -->
+    <div class="topbar-right">
+      <!-- Mobile menu btn -->
+      <button class="mobile-panel-btn mobile-menu-btn" onclick="toggleSidebar()" style="margin-right:0.3rem;">☰</button>
+      <div class="currency">
+        <img src="assets/dashboard/coin.png" onerror="this.style.display='none'" alt="">
+        <span class="currency-val">1.42681</span>
+      </div>
+      <div class="currency">
+        <img src="assets/dashboard/gem.png" onerror="this.style.display='none'" alt="">
+        <span class="currency-val">8,450</span>
+      </div>
+      <div class="currency-add">+</div>
+
+      <div class="topbar-actions">
+        <button class="topbar-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          <div class="notif-dot"></div>
+        </button>
+        <button class="menu-btn"><span></span><span></span><span></span></button>
+      </div>
+
+      <!-- Mobile right panel btn -->
+      <button class="mobile-panel-btn" onclick="toggleRightPanel()">⊞</button>
+
+      <div class="profile-top">
+        <div class="profile-avatar">
+          <img src="assets/dashboard/slimo_mini.png" onerror="this.style.background='#ec4899'" alt="">
+        </div>
+        <div class="profile-info">
+          <div class="profile-name">SlimeMaster</div>
+          <div class="profile-lv">Lv. 35 · 68%</div>
+          <div class="profile-xp"><div class="profile-xp-fill"></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="sidebar-item active">
+      <img src="assets/icons/sidebar/dashboard.png" onerror="this.outerHTML='<svg width=22 height=22 viewBox=&quot;0 0 24 24&quot; fill=&quot;%23C6A85A&quot;><rect x=3 y=3 width=8 height=8/><rect x=13 y=3 width=8 height=8/><rect x=3 y=13 width=8 height=8/><rect x=13 y=13 width=8 height=8/></svg>'" alt="">
+      <span>Dashboard</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/heroes.png" onerror="this.outerHTML='<svg width=22 height=22 viewBox=&quot;0 0 24 24&quot; fill=&quot;%23C6A85A&quot;><path d=&quot;M12 2l3 7h7l-6 4 2 7-6-4-6 4 2-7-6-4h7z&quot;/></svg>'" alt="">
+      <span>Heroes</span>
+      <span class="sidebar-badge">3</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/equipment.png" onerror="this.outerHTML='<svg width=22 height=22 viewBox=&quot;0 0 24 24&quot; fill=&quot;%23C6A85A&quot;><path d=&quot;M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z&quot;/></svg>'" alt="">
+      <span>Equipment</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/summon.png" alt="">
+      <span>Summon</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/collection.png" alt="">
+      <span>Collection</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/achievement.png" alt="">
+      <span>Achievement</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/event.png" alt="">
+      <span>Event</span>
+      <span class="new-badge">NEW</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/mail.png" alt="">
+      <span>Mail</span>
+    </div>
+    <div class="sidebar-item">
+      <img src="assets/icons/sidebar/settings.png" alt="">
+      <span>Settings</span>
+    </div>
+
+    <!-- Special Pack -->
+  </aside>
+
+  <!-- ══ STAGE ══ -->
+  <main class="stage">
+    <!-- Layer system -->
+    <div class="stage-sky"></div>
+    <div class="stage-mid"></div>
+    <div class="stage-ground"></div>
+
+    <!-- Rune circle on ground -->
+    <img class="rune-img" src="assets/dashboard/rune.png" alt="">
+
+    <!-- Slime -->
+    <div class="slime-stage">
+      <img class="slime-img" src="assets/dashboard/slimo.png"
+        onerror="this.style.display='none'" alt="Slimo">
+    </div>
+  </main>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <aside class="right-panel">
+
+    <!-- Event Banner -->
+    <div class="event-banner">
+      <img src="assets/dashboard/event_celestial.png" alt="">
+      <div class="event-notif"></div>
+    </div>
+
+    <!-- Mystery Box -->
+    <div class="panel-card">
+      <div class="panel-card-info">
+        <div class="pc-title">Mystery Box</div>
+        <div class="pc-sub">Try your luck!</div>
+      </div>
+      <img class="panel-card-img" src="assets/dashboard/chest.png" alt="">
+      <div class="panel-card-notif"></div>
+    </div>
+
+    <!-- Adventure -->
+    <div class="adventure-card">
+      <img src="assets/dashboard/adventure.png" alt="">
+      <div class="panel-card-notif"></div>
+    </div>
+
+    <!-- Mini cards -->
+    <div class="mini-cards">
+      <div class="mini-card">
+        <div class="mc-label">Daily Quest</div>
+        <div class="mc-title">3/6</div>
+        <div class="mc-sub">Complete for rewards</div>
+      </div>
+      <div class="mini-card">
+        <div class="mc-label">Pass</div>
+        <div class="mc-title">Lv. 12</div>
+        <div class="mc-sub">Season ongoing</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══ BOTTOM BAR ══ -->
+  <footer class="bottombar">
+    <!-- Mood bar kiri -->
+    <div class="mood-bar">
+      <div class="mood-slime">
+        <img src="assets/dashboard/slimo_mini.png" onerror="this.style.background='#ec4899'" alt="">
+      </div>
+      <div class="mood-info">
+        <div class="mood-label">Mood</div>
+        <div class="mood-val" id="moodVal">Happy</div>
+        <div class="mood-hp">
+          <div class="mood-hp-bar"><div class="mood-hp-fill"></div></div>
+          <div class="mood-hp-text">120/200 ♥</div>
+        </div>
+      </div>
+      <div class="mood-speech" id="moodSpeech">"Let's go on an adventure!"</div>
+      <button class="mood-add">+</button>
+    </div>
+    <div class="quick-actions">
+      <div class="qa">
+        <img class="qa-icon" src="assets/icons/sidebar/summon.png" onerror="this.style.display='none'" alt="">
+        <span class="qa-label">Summon</span>
+      </div>
+      <div class="qa">
+        <img class="qa-icon" src="assets/icons/sidebar/collection.png" onerror="this.style.display='none'" alt="">
+        <span class="qa-label">Guild</span>
+      </div>
+      <div class="qa">
+        <img class="qa-icon" src="assets/icons/sidebar/equipment.png" onerror="this.style.display='none'" alt="">
+        <span class="qa-label">Craft</span>
+        <div class="qa-notif"></div>
+      </div>
+      <div class="qa">
+        <img class="qa-icon" src="assets/icons/sidebar/heroes.png" onerror="this.style.display='none'" alt="">
+        <span class="qa-label">Arena</span>
+      </div>
+      <div class="qa">
+        <img class="qa-icon" src="assets/icons/sidebar/achievement.png" onerror="this.style.display='none'" alt="">
+        <span class="qa-label">Raid</span>
+      </div>
+    </div>
+
+    <!-- Start Adventure CTA - image button -->
+    <img class="start-cta-img" src="assets/dashboard/start_adventure_nobg-1.png"
+      onclick="alert('Starting Adventure!')"
+      alt="Start Adventure">
+  </footer>
+
+</div>
+
+<script>
+// Mobile panel toggles
+function toggleSidebar(){
+  const s=document.querySelector('.sidebar');
+  const o=document.getElementById('mobileOverlay');
+  const isOpen=s.classList.contains('open');
+  closePanels();
+  if(!isOpen){s.classList.add('open');o.classList.add('show');}
+}
+function toggleRightPanel(){
+  const r=document.querySelector('.right-panel');
+  const o=document.getElementById('mobileOverlay');
+  const isOpen=r.classList.contains('open');
+  closePanels();
+  if(!isOpen){r.classList.add('open');o.classList.add('show');}
+}
+function closePanels(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.querySelector('.right-panel').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('show');
+}
+
+// Nav switching
+function setNav(el) {
+  document.querySelectorAll('.nav-icon').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Sidebar switching
+document.querySelectorAll('.sidebar-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+
+// Slime click moods
+const MOODS = [
+  {mood:'Happy', speech:'"Let\'s go on an adventure!"'},
+  {mood:'Excited', speech:'"I\'m ready to fight!"'},
+  {mood:'Sleepy', speech:'"Zzz... just 5 more minutes..."'},
+  {mood:'Hungry', speech:'"Do we have any dungeons to eat?"'},
+  {mood:'Proud', speech:'"I defeated the boss again!"'},
+];
+let moodIdx = 0;
+function slimeClick() {
+  moodIdx = (moodIdx+1) % MOODS.length;
+  document.getElementById('moodVal').textContent = MOODS[moodIdx].mood;
+  document.getElementById('moodSpeech').textContent = MOODS[moodIdx].speech;
+  // bounce
+  const s = document.querySelector('.slime-img');
+  s.style.animation = 'none';
+  s.style.transform = 'scale(1.15) translateY(-8px)';
+  setTimeout(()=>{
+    s.style.transform = '';
+    s.style.animation = 'slimefloat 3.5s ease-in-out infinite';
+  }, 300);
+}
+
+
+</script>
+</body>
+</html>
