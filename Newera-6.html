@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newera</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  background:#06050d;
+}
+
+/* ── TOPBAR ── */
+.topbar{
+  position:relative;z-index:50;
+  width:100vw;height:60px;
+  display:flex;align-items:center;
+  padding:0 1.2rem;gap:1rem;
+  background:linear-gradient(180deg,rgba(6,4,14,0.92) 0%,rgba(6,4,14,0.75) 100%);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(198,168,90,0.2);
+  box-shadow:0 4px 30px rgba(0,0,0,0.5);
+}
+.logo{display:flex;align-items:center;flex-shrink:0;margin-right:0.5rem;}
+.logo img{height:48px;width:auto;object-fit:contain;mix-blend-mode:lighten;filter:drop-shadow(0 0 8px rgba(198,168,90,0.4));}
+.nav-icons{display:flex;align-items:center;gap:0.2rem;flex:1;}
+.nav-icon{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:0.4rem 0.9rem;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all 0.2s;
+}
+.nav-icon.active{border-bottom-color:#C6A85A;}
+.nav-icon:hover{border-bottom-color:rgba(198,168,90,0.4);}
+.nav-icon img{width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));transition:filter 0.2s;}
+.nav-icon.active img,.nav-icon:hover img{filter:drop-shadow(0 0 8px rgba(198,168,90,0.8)) drop-shadow(0 2px 4px rgba(0,0,0,0.6));}
+.nav-icon span{font-family:'Cinzel',serif;font-size:0.42rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(240,230,211,0.4);transition:color 0.2s;}
+.nav-icon.active span,.nav-icon:hover span{color:#C6A85A;}
+.topbar-right{display:flex;align-items:center;gap:0.6rem;margin-left:auto;}
+.currency{display:flex;align-items:center;gap:0.35rem;background:rgba(0,0,0,0.35);border:1px solid rgba(198,168,90,0.2);padding:0.25rem 0.7rem;}
+.currency img{width:16px;height:16px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(255,200,0,0.8));}
+.currency-val{font-family:'DM Mono',monospace;font-size:0.58rem;color:#E8C97A;letter-spacing:0.06em;}
+.currency-add{width:18px;height:18px;border:1px solid rgba(198,168,90,0.2);background:rgba(198,168,90,0.1);color:#C6A85A;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.topbar-btn{width:32px;height:32px;border:1px solid rgba(198,168,90,0.2);background:rgba(0,0,0,0.3);color:rgba(240,230,211,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;position:relative;}
+.topbar-btn:hover{border-color:#C6A85A;color:#C6A85A;}
+.notif-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#ef4444;}
+.profile-top{display:flex;align-items:center;gap:0.5rem;background:rgba(0,0,0,0.4);border:1px solid rgba(198,168,90,0.2);padding:0.25rem 0.6rem 0.25rem 0.3rem;cursor:pointer;}
+.profile-avatar{width:32px;height:32px;border-radius:50%;border:1px solid #C6A85A;overflow:hidden;background:#1a1228;}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-info{display:flex;flex-direction:column;}
+.profile-name{font-family:'Cinzel',serif;font-size:0.55rem;font-weight:700;color:#F0E6D3;letter-spacing:0.04em;}
+.profile-lv{font-family:'DM Mono',monospace;font-size:0.42rem;color:rgba(198,168,90,0.6);}
+.profile-xp{width:60px;height:3px;background:rgba(255,255,255,0.1);margin-top:2px;}
+.profile-xp-fill{height:100%;width:68%;background:linear-gradient(90deg,#C6A85A,#FFD700);}
+
+/* ── SCENE WRAPPER ── */
+.scene{
+  position:relative;
+  width:100vw;
+  height:850px;
+  overflow:hidden;
+}
+
+/* ── LAYER: SKY (belakang) ── */
+.layer-sky{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:url('assets/dashboard/sky.png') center center / cover no-repeat;
+}
+
+/* ── LAYER: MID (tengah) ── */
+.layer-mid{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  background:url('assets/dashboard/mid.png') center bottom / cover no-repeat;
+}
+
+/* ── LAYER: GROUND / RUNE (paling depan background) ── */
+.layer-ground{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  background:url('assets/dashboard/ground.png') center bottom / cover no-repeat;
+}
+
+/* ── SLIME ── */
+/* Rune center di ground.png: horizontal center, ~62% dari atas gambar */
+/* ground.png di-cover dari bottom, jadi posisi rune di layar ~38% dari bawah */
+.slime-wrap{
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:42%;
+  transform:translateX(-50%) translateY(50%);
+}
+
+.slime-img{
+  width:500px;
+  height:auto;
+  display:block;
+  filter:
+    drop-shadow(0 20px 60px rgba(0,0,0,0.6))
+    drop-shadow(0 0 60px rgba(255,200,100,0.25));
+}
+
+/* ── AMBIENT GLOW di bawah slime ── */
+.slime-glow{
+  position:absolute;
+  left:50%;
+  bottom:42%;
+  transform:translateX(-50%) translateY(50%);
+  width:400px;
+  height:60px;
+  background:radial-gradient(ellipse, rgba(100,180,255,0.2) 0%, transparent 70%);
+  z-index:3;
+  pointer-events:none;
+}
+</style>
+</head>
+<body>
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="logo">
+    <img src="assets/dashboard/logo.png" alt="Slime Runes">
+  </div>
+  <nav class="nav-icons">
+    <div class="nav-icon active">
+      <img src="assets/icons/navbar/home.png" alt=""><span>Home</span>
+    </div>
+    <div class="nav-icon">
+      <img src="assets/icons/navbar/hero.png" alt=""><span>Hero</span>
+    </div>
+    <div class="nav-icon">
+      <img src="assets/icons/navbar/inventory.png" alt=""><span>Inventory</span>
+    </div>
+    <div class="nav-icon">
+      <img src="assets/icons/navbar/shop.png" alt=""><span>Shop</span>
+    </div>
+    <div class="nav-icon">
+      <img src="assets/icons/navbar/quest.png" alt=""><span>Quest</span>
+    </div>
+  </nav>
+  <div class="topbar-right">
+    <div class="currency">
+      <img src="assets/dashboard/coin.png" alt="">
+      <span class="currency-val">1.42681</span>
+    </div>
+    <div class="currency">
+      <img src="assets/dashboard/gem.png" alt="">
+      <span class="currency-val">8,450</span>
+    </div>
+    <div class="currency-add">+</div>
+    <button class="topbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      <div class="notif-dot"></div>
+    </button>
+    <button class="topbar-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      <div class="notif-dot"></div>
+    </button>
+    <div class="profile-top">
+      <div class="profile-avatar">
+        <img src="assets/dashboard/slimo_mini.png" onerror="this.style.background='#ec4899'" alt="">
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">SlimeMaster</div>
+        <div class="profile-lv">Lv. 35 · 68%</div>
+        <div class="profile-xp"><div class="profile-xp-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="scene">
+  <!-- Background layers -->
+  <div class="layer-sky"></div>
+  <div class="layer-mid"></div>
+  <div class="layer-ground"></div>
+
+  <!-- Ambient glow di rune -->
+  <div class="slime-glow"></div>
+
+  <!-- Slime -->
+  <div class="slime-wrap">
+    <img class="slime-img" src="assets/dashboard/slimo.png" alt="Slimo">
+  </div>
+</div>
+</body>
+</html>
